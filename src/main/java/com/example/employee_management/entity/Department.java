@@ -1,25 +1,20 @@
 package com.example.employee_management.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "employees")
 @Getter
 @Setter
 @NoArgsConstructor
-public class Employee {
+@JsonIgnoreProperties({"hibernateLazyInitializer","handler"})
+public class Department {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
+    @Column(nullable = false,unique = true)
     private String name;
-    private String email;
-    private double salary;
-
-    @ManyToOne(fetch = FetchType.LAZY,optional = false)
-    @JoinColumn(name="department_id",nullable = false)
-    private Department department;
-
 }
