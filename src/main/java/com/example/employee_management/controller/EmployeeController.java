@@ -1,8 +1,10 @@
 package com.example.employee_management.controller;
 
+import com.example.employee_management.dto.EmployeeRequest;
 import com.example.employee_management.dto.EmployeeResponse;
 import com.example.employee_management.entity.Employee;
 import com.example.employee_management.service.EmployeeService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,8 +17,8 @@ public class EmployeeController {
         this.employeeService=employeeService;
     }
     @PostMapping
-    public Employee save(@RequestBody Employee employee){
-        return employeeService.saveEmployee(employee);
+    public Employee save(@Valid @RequestBody EmployeeRequest request){
+        return employeeService.saveEmployee(request);
     }
     @GetMapping
     public List<EmployeeResponse> findAllEmployees(){
@@ -27,8 +29,8 @@ public class EmployeeController {
         return employeeService.findAnEmployeeById(id);
     }
     @PutMapping("/{id}")
-    public Employee updateEmployee(@PathVariable Long id,@RequestBody Employee employeeDetails){
-        return employeeService.updateEmployee(id,employeeDetails);
+    public Employee updateEmployee(@PathVariable Long id,@Valid @RequestBody EmployeeRequest request){
+        return employeeService.updateEmployee(id,request);
     }
     @DeleteMapping("/{id}")
     public void deleteEmployee(@PathVariable Long id){
@@ -53,5 +55,10 @@ public class EmployeeController {
     @GetMapping("/paged")
     public List<EmployeeResponse> fineEmployeePage(@RequestParam int page,@RequestParam int size){
         return employeeService.findEmployeesPage(page,size);
+    }
+    @PostMapping("/rollback")
+    public void testSalaryRollBack(@RequestParam Long firstId,@RequestParam Long secondId) throws Exception{
+        employeeService.testSalaryRollBack(firstId,secondId);
+        throw new Exception("Intentional failure to test rollback");
     }
 }

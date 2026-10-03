@@ -1,5 +1,6 @@
 package com.example.employee_management.service;
 
+import com.example.employee_management.dto.EmployeeResponse;
 import com.example.employee_management.entity.Department;
 import com.example.employee_management.repository.DepartmentRepository;
 import org.springframework.stereotype.Service;
@@ -37,5 +38,20 @@ public class DepartmentService {
 
     public void deleteDepartment(Long id) {
         departmentRepository.deleteById(id);
+    }
+    @Transactional(readOnly = true)
+    public List<EmployeeResponse> findDepartmentEmployees(Long id){
+        Department department=departmentRepository.findById(
+                id
+        ).orElseThrow(()->new RuntimeException("Department not found"));
+        return department.getEmployeeList().stream().map(
+                employee -> new EmployeeResponse(
+                        employee.getId(),
+                        employee.getName(),
+                        employee.getEmail(),
+                        employee.getSalary(),
+                        department.getId(),
+                        department.getName()
+                )).toList();
     }
 }

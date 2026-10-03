@@ -1,8 +1,11 @@
 package com.example.employee_management.service;
 
+import com.example.employee_management.dto.EmployeeRequest;
 import com.example.employee_management.dto.EmployeeResponse;
 import com.example.employee_management.entity.Department;
 import com.example.employee_management.entity.Employee;
+import com.example.employee_management.exception.DuplicateEmailException;
+import com.example.employee_management.exception.ResourceNotFoundException;
 import com.example.employee_management.repository.DepartmentRepository;
 import com.example.employee_management.repository.EmployeeRepository;
 
@@ -25,19 +28,23 @@ public class EmployeeService {
         this.departmentRepository=departmentRepository;
     }
 
-    public Employee saveEmployee(Employee employee) {
-        Department department=findRequestedDepartment(employee);
+    public Employee saveEmployee(EmployeeRequest request) {
+        if(employeeRepository.existsByEmail(request.email())){
+            throw new DuplicateEmailException("Email already exists");
+        }
+        Department department=departmentRepository.findById(request.departmentId())
+                .orElseThrow(()->new ResourceNotFoundException("Department not found"));
+        Employee employee=new Employee();
+        employee.setName(request.name());
+        employee.setEmail(request.email());
+        employee.setSalary(request.salary());
         employee.setDepartment(department);
         return employeeRepository.save(employee);
     }
 
-    private Department findRequestedDepartment(Employee employee){
-        if(Objects.isNull(employee.getDepartment())|| Objects.isNull(employee.getDepartment().getId())){
-            throw new IllegalArgumentException("Department ID is required");
-        }
-        Long departmentId=employee.getDepartment().getId();
-        return departmentRepository.findById(departmentId)
-                .orElseThrow(()->new RuntimeException("Department with this id not found"));
+    private Department findRequestedDepartment(EmployeeRequest employeeRequest){
+        return departmentRepository.findById(employeeRequest.departmentId())
+                .orElseThrow(()->new ResourceNotFoundException("Department with this id not found"));
 
     }
     @Transactional(readOnly = true)
@@ -55,16 +62,19 @@ public class EmployeeService {
 
     public Employee findAnEmployeeById(Long id) {
         return employeeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee with this id not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee with this id not found"));
     }
    @Transactional
-    public Employee updateEmployee(Long id, Employee employeeDetails) {
+    public Employee updateEmployee(Long id, EmployeeRequest employeeRequest) {
+       if(employeeRepository.existsByEmailAndIdNot(employeeRequest.email(),id)){
+           throw new DuplicateEmailException("Email already exists");
+       }
         Employee employee=employeeRepository.findById(id)
-                .orElseThrow(()->new RuntimeException("Employee with this id not found"));
-        employee.setName(employeeDetails.getName());
-        employee.setEmail(employeeDetails.getEmail());
-        employee.setSalary(employeeDetails.getSalary());
-        employee.setDepartment(findRequestedDepartment(employeeDetails));
+                .orElseThrow(()->new ResourceNotFoundException("Employee with this id not found"));
+        employee.setName(employeeRequest.name());
+        employee.setEmail(employeeRequest.email());
+        employee.setSalary(employeeRequest.salary());
+        employee.setDepartment(findRequestedDepartment(employeeRequest));
         return employee;
     }
 
@@ -97,5 +107,23 @@ public class EmployeeService {
                         employee.getSalary(),
                         employee.getDepartment().getId(),
                         employee.getDepartment().getName())).toList();
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void testSalaryRollBack(Long firstId,Long secondId) throws Exception {
+        if(firstId.equals(secondId)){
+            throw new IllegalArgumentException("Use two different employees");
+        }
+        Employee first=employeeRepository.findById(firstId)
+                .orElseThrow(()->new ResourceNotFoundException("First Employee not found"));
+        Employee second=employeeRepository.findById(secondId)
+                .orElseThrow(()->new ResourceNotFoundException(
+                        "Second Employee not found"
+                ));
+        first.setSalary(first.getSalary()+1000);
+        second.setSalary(second.getSalary()+2000);
+        employeeRepository.flush();
+        throw new Exception("Intentional Checked Exception");
+
     }
 }

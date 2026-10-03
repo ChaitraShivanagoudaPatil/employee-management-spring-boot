@@ -1,5 +1,6 @@
 package com.example.employee_management.controller;
 
+import com.example.employee_management.dto.EmployeeResponse;
 import com.example.employee_management.entity.Department;
 import com.example.employee_management.service.DepartmentService;
 import org.springframework.web.bind.annotation.*;
@@ -32,5 +33,9 @@ public class DepartmentController {
     @DeleteMapping("/{id}")
     public void deleteDepartment(@PathVariable Long id){
         departmentService.deleteDepartment(id);
+    }
+    @GetMapping("{id}/employees")
+    public List<EmployeeResponse> getDepartmentEmployees(@PathVariable Long id){
+        return departmentService.findDepartmentEmployees(id);
     }
 }

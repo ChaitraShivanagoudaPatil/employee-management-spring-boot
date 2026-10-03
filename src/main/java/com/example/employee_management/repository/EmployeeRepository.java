@@ -25,8 +25,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long
     List<Employee> findBySalaryBetween(double minSalary, double maxSalary);
 
     boolean existsByEmail(String email);
+    boolean existsByEmailAndIdNot(String email,Long id);
 
     long countByDepartmentId(Long departmentId);
+
 
     @Query("""
             SELECT e FROM Employee e WHERE e.salary > :salary
